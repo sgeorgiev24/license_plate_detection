@@ -12,7 +12,7 @@
 # Ignore .png files
 *.png
 
-*.c.swp
+*.swp
 
 # Prerequisites
 *.d
