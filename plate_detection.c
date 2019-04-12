@@ -91,7 +91,12 @@ int main(int argc, char *argv[])
 	sod_box *box = 0;
 	int i, nbox;
 	sod_image_find_blobs(dilate_image, &box, &nbox, filter_cb);
-  
+
+    if (nbox < 1) {
+        printf("Can not find license plate.\n");
+        return 0;
+    }
+
     /* Print box fields */
     printf("confidence threshold: %f\n", box[0].score);
     printf("x: %d\n", box[0].x);
