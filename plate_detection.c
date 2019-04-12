@@ -9,7 +9,6 @@
 
 #include <stdio.h>
 #include "sod/sod.h"
-#include "plate_detection.h"
 
 #define REPEAT_DILATION 2
 
@@ -70,16 +69,14 @@ int main(int argc, char *argv[])
     sod_img copy_image = sod_img_load_color(input_image_path);
 
     /* Obtain a binary image */
-    sod_img binary_image = create_and_save_binary_img(grayscale_image, binary_image_path, 0.1);
+    sod_img binary_image = sod_threshold_image(grayscale_image, 0.1); /* TODO: find best val for thresh */
+    sod_img_save_as_png(binary_image, binary_image_path);
 
     /* Perform Canny edge detection next which is a mandatory step  */
     sod_img canny_image = sod_canny_edge_image(binary_image, 1); /* Reduce noise */
     sod_img_save_as_png(canny_image, canny_image_path);
 
-    /*
-     * Dilate the image say 12 times but you should experiment
-     * with different values for best results which depend
-     * on the quality of the input image/frame. */
+    /* Obtain a dilate image */
     sod_img dilate_image = sod_dilate_image(canny_image, REPEAT_DILATION);
     sod_img_save_as_png(dilate_image, dilate_image_path);
 
@@ -89,10 +86,10 @@ int main(int argc, char *argv[])
      * discard small or large rectangle areas.
      */
     sod_box *box = 0;
-    int i, nbox;
-    sod_image_find_blobs(dilate_image, &box, &nbox, filter_cb);
+    int i, box_count;
+    sod_image_find_blobs(dilate_image, &box, &box_count, filter_cb);
 
-    if (nbox < 1) {
+    if (box_count < 1) {
         printf("Can not find license plate.\n");
         return 0;
     }
@@ -111,7 +108,7 @@ int main(int argc, char *argv[])
     sod_img_save_as_png(cropped_image, cropped_image_path);
 
     /* Draw a box on each potential plate coordinates */
-    for (i = 0; i < nbox; i++) {
+    for (i = 0; i < box_count; i++) {
         sod_image_draw_bbox_width(copy_image, box[i], 5, 255., 0, 225.); // rose box
     }
     sod_image_blob_boxes_release(box);
