@@ -67,32 +67,45 @@ int main(int argc, char *argv[])
      * rose boxes marking the plate in question if any.
      */
     sod_img copy_image = sod_img_load_color(input_image_path);
-
-    /* Obtain a binary image */
-    sod_img binary_image = sod_threshold_image(grayscale_image, 0.1); /* TODO: find best val for thresh */
-    sod_img_save_as_png(binary_image, binary_image_path);
-
-    /* Perform Canny edge detection next which is a mandatory step  */
-    sod_img canny_image = sod_canny_edge_image(binary_image, 1); /* Reduce noise */
-    sod_img_save_as_png(canny_image, canny_image_path);
-
-    /* Obtain a dilate image */
-    sod_img dilate_image = sod_dilate_image(canny_image, REPEAT_DILATION);
-    sod_img_save_as_png(dilate_image, dilate_image_path);
-
-    /* Perform connected component labeling or blob detection
-     * now on the binary, canny edged, Gaussian noise reduced and
-     * finally dilated image using our filter callback that should
-     * discard small or large rectangle areas.
-     */
+    
+    int box_count = 0;
+    float thresh = 0;
     sod_box *box = 0;
-    int i, box_count;
-    sod_image_find_blobs(dilate_image, &box, &box_count, filter_cb);
+
+    sod_img binary_image, canny_image, dilate_image;
+
+    do {
+        thresh += 0.1;
+
+        /* DEBUG INFO */
+        printf("thresh = %f\n", thresh);
+        /* DEBUG INFO */
+
+        /* Obtain a binary image */
+        binary_image = sod_threshold_image(grayscale_image, thresh);
+
+        /* Perform Canny edge detection next which is a mandatory step  */
+        canny_image = sod_canny_edge_image(binary_image, 1); /* Reduce noise */
+
+        /* Obtain a dilate image */
+        dilate_image = sod_dilate_image(canny_image, REPEAT_DILATION);
+
+        /* Perform connected component labeling or blob detection
+         * now on the binary, canny edged, Gaussian noise reduced and
+         * finally dilated image using our filter callback that should
+         * discard small or large rectangle areas.
+         */
+        sod_image_find_blobs(dilate_image, &box, &box_count, filter_cb);
+    } while(box_count < 1 && thresh < 1);
 
     if (box_count < 1) {
         printf("Can not find license plate.\n");
         return 0;
     }
+
+    sod_img_save_as_png(binary_image, binary_image_path);
+    sod_img_save_as_png(canny_image, canny_image_path);
+    sod_img_save_as_png(dilate_image, dilate_image_path);
 
     /* Print box fields */
     printf("confidence threshold: %f\n", box[0].score);
@@ -108,7 +121,7 @@ int main(int argc, char *argv[])
     sod_img_save_as_png(cropped_image, cropped_image_path);
 
     /* Draw a box on each potential plate coordinates */
-    for (i = 0; i < box_count; i++) {
+    for (int i = 0; i < box_count; i++) {
         sod_image_draw_bbox_width(copy_image, box[i], 5, 255., 0, 225.); // rose box
     }
     sod_image_blob_boxes_release(box);
