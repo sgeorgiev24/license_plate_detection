@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include "sod/sod.h"
+#include "plate_detection.h"
 
 #define REPEAT_DILATION 2
 
@@ -68,9 +69,8 @@ int main(int argc, char *argv[])
 	 */
 	sod_img copy_image = sod_img_load_color(input_image_path);
     
-	/* Obtain a binary image */
-	sod_img binary_image = sod_threshold_image(grayscale_image, 0.1); /* TODO: find best val for thresh */
-    sod_img_save_as_png(binary_image, binary_image_path);
+    /* Obtain a binary image */
+    sod_img binary_image = create_and_save_binary_img(grayscale_image, binary_image_path, 0.1);
 
     /* Perform Canny edge detection next which is a mandatory step  */
 	sod_img canny_image = sod_canny_edge_image(binary_image, 1); /* Reduce noise */
