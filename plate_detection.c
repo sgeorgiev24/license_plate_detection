@@ -1,10 +1,9 @@
 /*
+ * License Plate Detection without deep-learning. Only image processing code.
+ *
  * Compile this file together with the SOD embedded source code to generate
  * the executable. For example:
  * gcc sod/sod.c plate_detection.c -lm -Ofast -march=native -Wall -std=c99 -o plate_detection
- *  
- * Make sure you have the latest release of SOD from:
- * https://pixlab.io/downloads
  */
 
 #include <stdio.h>
@@ -12,16 +11,10 @@
 
 #define REPEAT_DILATION 2
 
-/*
- * License Plate Detection without deep-learning. Only image processing code.
- */
-
 static int filter_cb(int width, int height)
 {
     /* A filter callback invoked by the blob routine each time
      * a potential blob region is identified.
-     * We use the `width` and `height` parameters supplied
-     * to discard regions of non interest (i.e. too big or too small).
      */
     if (((width > 300 && height > 200) || (width < 25 || height < 25)) || 
         (width/height < 2.7 || width/height > 3.3)) {
@@ -36,9 +29,9 @@ static int filter_cb(int width, int height)
 
 int main(int argc, char *argv[])
 {
-    /* Input image (pass a path, deffault is ./plate.jpg) */
+    /* Input image path, deffault is ./plate.jpg */
     const char *input_image_path = argc > 1 ? argv[1] : "./plate.jpg";
-    /* Output image path */
+    /* Output image path, deffault is ./out_plate.png */
     const char *out_image_path = argc > 2 ? argv[2] : "./out_plate.png";
     /* Grayscale image path */
     const char *grayscale_image_path = "./grayscale_plate.png";
@@ -55,16 +48,17 @@ int main(int argc, char *argv[])
     sod_img grayscale_image = sod_img_load_grayscale(input_image_path);
 
     if (grayscale_image.data == 0) {
-    /* Invalid path, unsupported format, memory failure, etc. */
+        /* Invalid path, unsupported format, memory failure, etc. */
         puts("Cannot load input image...exiting");
             return 0;
     }
+
     /* Save grayscale image */
     sod_img_save_as_png(grayscale_image, grayscale_image_path);
 
     /* 
      * A full color copy of the input image so we can draw 
-     * rose boxes marking the plate in question if any.
+     * rose boxes marking the plate if any.
      */
     sod_img copy_image = sod_img_load_color(input_image_path);
     
